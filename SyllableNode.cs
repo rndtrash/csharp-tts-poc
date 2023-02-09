@@ -78,17 +78,26 @@ public sealed class SyllableNode
          */
         
         Console.WriteLine($"DEBUG: Passing the torch to the next character...");
-        wordView = wordView[1..]; // Consume the character because we've found a plan B in case we won't find a longer word
-        return Branches[next].FindBestFit(ref wordView) ?? Path;
+        var tempWordView = wordView[1..]; // Consume the character because we've found a plan B in case we won't find a longer word
+        var result = Branches[next].FindBestFit(ref tempWordView);
+        if (result is null)
+            return Path;
+        
+        wordView = tempWordView;
+        return result;
+
     }
 
-    public void Print(int tabLevel = 0)
+    public string Print(int tabLevel = 0)
     {
-        Console.WriteLine(new string('\t', tabLevel) + Path);
+        var tabs = new string('\t', tabLevel);
+        var s = Path + Environment.NewLine;
         tabLevel++;
         foreach (var branch in Branches)
         {
-            branch.Value.Print(tabLevel);
+            s += $"{tabs}{branch.Key} = {branch.Value.Print(tabLevel)}{Environment.NewLine}";
         }
+
+        return s;
     }
 }

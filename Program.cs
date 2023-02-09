@@ -1,4 +1,5 @@
-﻿using SDL2.NET;
+﻿using NAudio.Wave;
+using SDL2.NET;
 using SDL2.NET.SDLMixer;
 using Sbox_TTS_POC;
 
@@ -22,8 +23,9 @@ AudioChunk LoadSound(string path)
 #endregion
 
 SyllableTree tree = new();
+tree.Add("_", "");
 foreach (var file in Directory.GetFiles(Directory.GetCurrentDirectory(), "*.wav"))
-    tree.Add(Path.GetFileNameWithoutExtension(file), file);
+    tree.Add(Path.GetFileNameWithoutExtension(file).ToLowerInvariant(), file);
 
 tree.Print();
 
@@ -31,14 +33,25 @@ Console.WriteLine("Enter the line to say or enter a word 'exit' without the quot
 
 while (Console.ReadLine() is { } input && input != "exit")
 {
-    var speech = tree.TTS(input);
+    var speech = tree.TextToSpeech(input);
 
-    foreach (var syllable in speech)
+    foreach (var word in speech)
     {
-        Console.WriteLine($"Playing \"{syllable}\"...");
-        var audioChunk = LoadSound(syllable);
-        audioChunk.Play();
-        SDLApplication.Delay(TimeSpan.FromSeconds(1)); // TODO: get length of a chunk
+        foreach (var syllable in word)
+        {
+            if (syllable == "")
+                continue;
+            
+            Console.WriteLine($"Playing \"{syllable}\"...");
+            var audioChunk = LoadSound(syllable);
+            audioChunk.Play();
+            
+            // TODO: perhaps don't use two sound libraries???
+            using var wf = new WaveFileReader(syllable);
+            SDLApplication.Delay(wf.TotalTime);
+        }
+
+        SDLApplication.Delay(TimeSpan.FromSeconds(0.2));
     }
 }
 

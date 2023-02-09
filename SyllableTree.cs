@@ -12,29 +12,31 @@ public sealed class SyllableTree
         Root.Add(ref wordView, path);
     }
 
-    public string[] TTS(string input)
+    public IEnumerable<IEnumerable<string>> TextToSpeech(string input)
     {
         var words = input.Split(' ');
-        var result = new List<string>();
+        var result = new List<IEnumerable<string>>();
         
         foreach (var word in words)
         {
-            var view = word.AsSpan();
+            var view = ($"{word}_").AsSpan(); // _ is a marker of the word's end
+            var wordSyllables = new List<string>();
             while (!view.IsEmpty)
             {
                 Console.WriteLine($"DEBUG TTS: Word {word} view {view}");
                 var path = Root.FindBestFit(ref view);
                 if (path is null)
                     throw new ArgumentException($"Did not manage to find a syllable for a word \"{word}\"");
-                result.Add(path);
+                wordSyllables.Add(path);
             }
+            result.Add(wordSyllables);
         }
 
-        return result.ToArray();
+        return result;
     }
 
     public void Print()
     {
-        Root.Print();
+        Console.WriteLine(Root.Print());
     }
 }
